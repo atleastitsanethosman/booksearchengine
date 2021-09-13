@@ -12,28 +12,28 @@ const resolvers = {
       },
     },
   Mutation: {
-    addUser: async (parent, { body }) => {
-        const user = await User.create(body);
-        const token = signToken(user);
-        return { token, user };
-      },  
-    login: async (parent, { body }) => {
-        const user = await User.findOne({ $or: [{ username: body.username }, { email: body.email }] });
+    addUser: async (parent, { username, email, password }) => {
+      const user = await User.create({ username, email, password });
+      const token = signToken(user);
+      return { token, user };
+    },
+    login: async (parent, { email, password }) => {
+      const user = await User.findOne({ email });
 
-        if (!user) {
-            throw new AuthenticationError("Can't find this user!");
-        }
+      if (!user) {
+        throw new AuthenticationError('No user found with this email address');
+      }
 
-        const correctPw = await user.isCorrectPassword(body.password);
+      const correctPw = await user.isCorrectPassword(password);
 
-        if (!correctPw) {
-            throw new AuthenticationError('Incorrect credentials');
-        }
+      if (!correctPw) {
+        throw new AuthenticationError('Incorrect credentials');
+      }
 
-        const token = signToken(user);
+      const token = signToken(user);
 
-        return { token, user };
-      },
+      return { token, user };
+    },
     saveBook: async (parent, {body}, context) => {
       if (context.user) {
         return User.findOneAndUpdate(
